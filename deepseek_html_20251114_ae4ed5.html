@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书海拾贝 - 个人读书分享</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cbc;
+            --accent-color: #ff7e5f;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --gray-color: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 2rem;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark-color);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-color);
+        }
+        
+        .page {
+            display: none;
+            padding: 2rem 0;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn:hover {
+            background-color: #ff6b4a;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            border-left: 4px solid var(--accent-color);
+            padding-left: 1rem;
+        }
+        
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .book-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .book-cover {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        
+        .book-info {
+            padding: 1.5rem;
+        }
+        
+        .book-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+        
+        .book-author {
+            color: var(--gray-color);
+            margin-bottom: 1rem;
+        }
+        
+        .book-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .review-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .reviewer {
+            font-weight: 600;
+        }
+        
+        .rating {
+            color: #ffc107;
+        }
+        
+        .search-bar {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 1rem;
+        }
+        
+        .search-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .status-want { background-color: #e3f2fd; color: #1976d2; }
+        .status-reading { background-color: #fff3e0; color: #f57c00; }
+        .status-read { background-color: #e8f5e9; color: #388e3c; }
+        
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-color);
+        }
+        
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 1rem 0;
+            }
+            
+            .nav-links {
+                margin-top: 1rem;
+            }
+            
+            .nav-links li {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .books-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <a href="#" class="logo">书海拾贝</a>
+                <ul class="nav-links">
+                    <li><a href="#" class="nav-link active" data-page="home">首页</a></li>
+                    <li><a href="#" class="nav-link" data-page="library">书籍库</a></li>
+                    <li><a href="#" class="nav-link" data-page="my-books">我的书单</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- 首页 -->
+        <section id="home" class="page active">
+            <div class="hero">
+                <div class="container">
+                    <h1>发现下一本好书</h1>
+                    <p>记录阅读时光，分享读书心得，与爱书之人交流思想</p>
+                    <a href="#" class="btn" data-page="library">浏览书库</a>
+                </div>
+            </div>
+            
+            <div class="container">
+                <h2 class="section-title">热门书籍</h2>
+                <div id="featured-books" class="books-grid">
+                    <div class="loading">加载中...</div>
+                </div>
+                
+                <h2 class="section-title">最新书评</h2>
+                <div id="recent-reviews">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 书籍库 -->
+        <section id="library" class="page">
+            <div class="container">
+                <h1 class="section-title">书籍库</h1>
+                
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="search-input" placeholder="搜索书名或作者...">
+                    <button class="search-btn" id="search-btn">搜索</button>
+                </div>
+                
+                <div class="filters">
+                    <select class="filter-select" id="genre-filter">
+                        <option value="">所有分类</option>
+                        <option value="小说">小说</option>
+                        <option value="文学">文学</option>
+                        <option value="科幻">科幻</option>
+                        <option value="历史">历史</option>
+                        <option value="传记">传记</option>
+                        <option value="心理">心理</option>
+                    </select>
+                    
+                    <select class="filter-select" id="sort-filter">
+                        <option value="newest">最新添加</option>
+                        <option value="title">书名排序</option>
+                        <option value="author">作者排序</option>
+                    </select>
+                </div>
+                
+                <div id="all-books" class="books-grid">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 我的书单 -->
+        <section id="my-books" class="page">
+            <div class="container">
+                <h1 class="section-title">我的书单</h1>
+                
+                <div class="filters">
+                    <button class="btn status-filter active" data-status="all">全部</button>
+                    <button class="btn status-filter" data-status="want_to_read">想读</button>
+                    <button class="btn status-filter" data-status="reading">在读</button>
+                    <button class="btn status-filter" data-status="read">已读</button>
+                </div>
+                
+                <div id="user-books" class="books-grid">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 书海拾贝 - 个人读书分享网站 | 使用 Supabase 和 Netlify 构建</p>
+        </div>
+    </footer>
+
+    <script>
+        // 使用您提供的Supabase配置
+        const SUPABASE_URL = 'https://olcpitljikkpigyxrvpo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9sY3BpdGxqaWtrcGlneXhydnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwOTU4NzIsImV4cCI6MjA3ODY3MTg3Mn0.rSQg-3OuC3c-wAfr-cDy-GQKFu1pOUMjhJFchRzucio';
+        
+        // 初始化Supabase客户端
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // 当前用户（简化版）
+        const currentUser = "阅读爱好者";
+        
+        // 页面导航
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // 更新活动导航链接
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                // 显示对应页面
+                const pageId = link.getAttribute('data-page');
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                document.getElementById(pageId).classList.add('active');
+                
+                // 加载页面数据
+                if (pageId === 'home') {
+                    loadFeaturedBooks();
+                    loadRecentReviews();
+                } else if (pageId === 'library') {
+                    loadAllBooks();
+                } else if (pageId === 'my-books') {
+                    loadUserBooks();
+                }
+            });
+        });
+        
+        // 首页按钮
+        document.querySelector('.btn[data-page="library"]').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelector('.nav-link[data-page="library"]').click();
+        });
+        
+        // 搜索功能
+        document.getElementById('search-btn').addEventListener('click', () => {
+            const searchTerm = document.getElementById('search-input').value;
+            searchBooks(searchTerm);
+        });
+        
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const searchTerm = document.getElementById('search-input').value;
+                searchBooks(searchTerm);
+            }
+        });
+        
+        // 分类筛选
+        document.getElementById('genre-filter').addEventListener('change', () => {
+            loadAllBooks();
+        });
+        
+        // 状态筛选
+        document.querySelectorAll('.status-filter').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.status-filter').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                loadUserBooks();
+            });
+        });
+        
+        // 加载热门书籍
+        async function loadFeaturedBooks() {
+            const container = document.getElementById('featured-books');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('books')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(6);
+                
+                if (error) throw error;
+                
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<p>暂无书籍数据</p>';
+                    return;
+                }
+                
+                data.forEach(book => {
+                    const bookCard = createBookCard(book);
+                    container.appendChild(bookCard);
+                });
+            } catch (error) {
+                console.error('加载热门书籍出错:', error);
+                container.innerHTML = '<p>加载失败，请刷新页面重试</p>';
+            }
+        }
+        
+        // 加载最新书评
+        async function loadRecentReviews() {
+            const container = document.getElementById('recent-reviews');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('reviews')
+                    .select(`
+                        *,
+                        books (title, author)
+                    `)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+                
+                if (error) throw error;
+                
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<p>暂无书评数据</p>';
+                    return;
+                }
+                
+                data.forEach(review => {
+                    const reviewCard = document.createElement('div');
+                    reviewCard.className = 'review-card';
+                    
+                    reviewCard.innerHTML = `
+                        <div class="review-header">
+                            <div class="reviewer">${review.user_name} 评论《${review.books.title}》</div>
+                            <div class="rating">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</div>
+                        </div>
+                        <p>${review.content}</p>
+                    `;
+                    
+                    container.appendChild(reviewCard);
+                });
+            } catch (error) {
+                console.error('加载书评出错:', error);
+                container.innerHTML = '<p>加载失败，请刷新页面重试</p>';
+            }
+        }
+        
+        // 加载所有书籍
+        async function loadAllBooks() {
+            const container = document.getElementById('all-books');
+            const genreFilter = document.getElementById('genre-filter').value;
+            const sortFilter = document.getElementById('sort-filter').value;
+            
+            try {
+                let query = supabase
+                    .from('books')
+                    .select('*');
+                
+                // 应用分类筛选
+                if (genreFilter) {
+                    query = query.eq('genre', genreFilter);
+                }
+                
+                // 应用排序
+                if (sortFilter === 'title') {
+                    query = query.order('title', { ascending: true });
+                } else if (sortFilter === 'author') {
+                    query = query.order('author', { ascending: true });
+                } else {
+                    query = query.order('created_at', { ascending: false });
+                }
+                
+                const { data, error } = await query;
+                
+                if (error) throw error;
+                
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<p>暂无书籍数据</p>';
+                    return;
+                }
+                
+                data.forEach(book => {
+                    const bookCard = createBookCard(book);
+                    container.appendChild(bookCard);
+                });
+            } catch (error) {
+                console.error('加载书籍出错:', error);
+                container.innerHTML = '<p>加载失败，请刷新页面重试</p>';
+            }
+        }
+        
+        // 搜索书籍
+        async function searchBooks(searchTerm) {
+            const container = document.getElementById('all-books');
+            
+            if (!searchTerm.trim()) {
+                loadAllBooks();
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('books')
+                    .select('*')
+                    .or(`title.ilike.%${searchTerm}%,author.ilike.%${searchTerm}%`);
+                
+                if (error) throw error;
+                
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<p>没有找到相关书籍</p>';
+                    return;
+                }
+                
+                data.forEach(book => {
+                    const bookCard = createBookCard(book);
+                    container.appendChild(bookCard);
+                });
+            } catch (error) {
+                console.error('搜索书籍出错:', error);
+                container.innerHTML = '<p>搜索失败，请重试</p>';
+            }
+        }
+        
+        // 加载用户书单
+        async function loadUserBooks() {
+            const container = document.getElementById('user-books');
+            const activeStatus = document.querySelector('.status-filter.active').getAttribute('data-status');
+            
+            try {
+                let query = supabase
+                    .from('user_books')
+                    .select(`
+                        *,
+                        books (*)
+                    `)
+                    .eq('user_name', currentUser);
+                
+                // 应用状态筛选
+                if (activeStatus !== 'all') {
+                    query = query.eq('status', activeStatus);
+                }
+                
+                const { data, error } = await query;
+                
+                if (error) throw error;
+                
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<p>您还没有添加任何书籍到书单</p>';
+                    return;
+                }
+                
+                data.forEach(userBook => {
+                    const bookCard = createBookCard(userBook.books, userBook.status);
+                    container.appendChild(bookCard);
+                });
+            } catch (error) {
+                console.error('加载用户书单出错:', error);
+                container.innerHTML = '<p>加载失败，请刷新页面重试</p>';
+            }
+        }
+        
+        // 创建书籍卡片
+        function createBookCard(book, status = null) {
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            
+            // 状态徽章
+            let statusBadge = '';
+            if (status) {
+                let statusText = '';
+                let statusClass = '';
+                
+                if (status === 'want_to_read') {
+                    statusText = '想读';
+                    statusClass = 'status-want';
+                } else if (status === 'reading') {
+                    statusText = '在读';
+                    statusClass = 'status-reading';
+                } else if (status === 'read') {
+                    statusText = '已读';
+                    statusClass = 'status-read';
+                }
+                
+                statusBadge = `<span class="status-badge ${statusClass}">${statusText}</span>`;
+            }
+            
+            card.innerHTML = `
+                <img src="${book.cover_url || 'https://via.placeholder.com/250x300?text=无封面'}" alt="${book.title}" class="book-cover">
+                <div class="book-info">
+                    <h3 class="book-title">${book.title}</h3>
+                    <p class="book-author">${book.author}</p>
+                    ${statusBadge}
+                    <div class="book-actions">
+                        <button class="btn btn-outline add-to-list" data-book-id="${book.id}">加入书单</button>
+                    </div>
+                </div>
+            `;
+            
+            // 添加事件监听
+            const addButton = card.querySelector('.add-to-list');
+            addButton.addEventListener('click', () => {
+                addBookToList(book.id);
+            });
+            
+            return card;
+        }
+        
+        // 添加书籍到书单
+        async function addBookToList(bookId) {
+            try {
+                const { data, error } = await supabase
+                    .from('user_books')
+                    .upsert({
+                        book_id: bookId,
+                        user_name: currentUser,
+                        status: 'want_to_read'
+                    });
+                
+                if (error) throw error;
+                
+                alert('已添加到"想读"书单！');
+            } catch (error) {
+                console.error('添加书籍出错:', error);
+                alert('添加失败，请重试');
+            }
+        }
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFeaturedBooks();
+            loadRecentReviews();
+        });
+    </script>
+</body>
+</html>
